@@ -220,7 +220,12 @@ PROTO Crazyflie [
     }
     physics Physics {
       density -1
-      mass 0.05
+      mass 0.027
+      centerOfMass 0 0 0
+      inertiaMatrix [
+        1.43e-5, 1.43e-5, 2.89e-5
+        0 0 0
+      ]
     }
   }
 }
