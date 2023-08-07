@@ -87,9 +87,9 @@ mellinger_ctrl.kd_xy = 0.2       # D
 mellinger_ctrl.ki_xy = 0.05      # I
 mellinger_ctrl.i_range_xy = 2.0
 
-mellinger_ctrl.kp_z = 1.25       # P
-mellinger_ctrl.kd_z = 0.4        # D
-mellinger_ctrl.ki_z = 0.5       # I
+mellinger_ctrl.kp_z = 0.55       # P
+mellinger_ctrl.kd_z = 0.55        # D
+mellinger_ctrl.ki_z = 1.2       # I
 mellinger_ctrl.i_range_z  = 0.4
 
 mellinger_ctrl.kR_xy = 70000 # P
