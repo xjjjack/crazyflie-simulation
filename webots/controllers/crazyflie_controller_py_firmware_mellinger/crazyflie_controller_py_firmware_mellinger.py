@@ -28,7 +28,7 @@ from math import cos, sin, degrees, radians
 import sys
 # Change this path to your crazyflie-firmware folder
 sys.path.append('/home/jack/crazyflie-firmware/build')
-import cffirmware
+import cffirmware as cf
 
 robot = Robot()
 
@@ -77,28 +77,27 @@ pastZGlobal = 0
 
 past_time = robot.getTime()
 
-cffirmware.controllerPidInit()
-mellinger_ctrl = cffirmware.controllerMellinger_t()
-cffirmware.controllerMellingerInit(mellinger_ctrl)
+mellinger_ctrl = cf.controllerMellinger_t()
+cf.controllerMellingerInit(mellinger_ctrl)
 mellinger_ctrl.massThrust = 90000
-
+# XY Position PID
 mellinger_ctrl.kp_xy = 0.4       # P
 mellinger_ctrl.kd_xy = 0.2       # D
-mellinger_ctrl.ki_xy = 0.05      # I
-mellinger_ctrl.i_range_xy = 2.0
-
+mellinger_ctrl.ki_xy = 0.5      # I
+mellinger_ctrl.i_range_xy = 0.4
+# Z Position
 mellinger_ctrl.kp_z = 0.55       # P
 mellinger_ctrl.kd_z = 0.55        # D
 mellinger_ctrl.ki_z = 1.2       # I
 mellinger_ctrl.i_range_z  = 0.4
-
-mellinger_ctrl.kR_xy = 70000 # P
-mellinger_ctrl.kw_xy = 20000 # D
+# Attitude
+mellinger_ctrl.kR_xy = 100 # P
+mellinger_ctrl.kw_xy = 100 # D
 mellinger_ctrl.ki_m_xy = 0.0 # I
 mellinger_ctrl.i_range_m_xy = 1.0
-
-mellinger_ctrl.kR_z = 60000 # P
-mellinger_ctrl.kw_z = 12000 # D
+# Yaw
+mellinger_ctrl.kR_z = 1000 # P
+mellinger_ctrl.kw_z = 1000 # D
 mellinger_ctrl.ki_m_z = 500 # I
 mellinger_ctrl.i_range_m_z  = 1500
 
@@ -135,7 +134,7 @@ while robot.step(timestep) != -1:
 
     ## Put measurement in state estimate
     # TODO replace these with a EKF python binding
-    state = cffirmware.state_t()
+    state = cf.state_t()
     state.attitude.roll = degrees(roll)
     state.attitude.pitch = -degrees(pitch)
     state.attitude.yaw = degrees(yaw)
@@ -147,7 +146,7 @@ while robot.step(timestep) != -1:
     state.velocity.z = vzGlobal
 
     # Put gyro in sensor data
-    sensors = cffirmware.sensorData_t()
+    sensors = cf.sensorData_t()
     sensors.gyro.x = degrees(roll_rate)
     sensors.gyro.y = degrees(pitch_rate)
     sensors.gyro.z = degrees(yaw_rate)
@@ -160,17 +159,17 @@ while robot.step(timestep) != -1:
     key = keyboard.getKey()
     while key>0:
         if key == Keyboard.UP:
-            forwardDesired = 0.5
+            forwardDesired = 0.1
         elif key == Keyboard.DOWN:
-            forwardDesired = -0.5
+            forwardDesired = -0.1
         elif key == Keyboard.RIGHT:
-            sidewaysDesired = -0.5
+            sidewaysDesired = -0.1
         elif key == Keyboard.LEFT:
-            sidewaysDesired = 0.5
+            sidewaysDesired = 0.1
         elif key == ord('Q'):
-            yawDesired = 8
+            yawDesired = 1
         elif key == ord('E'):
-            yawDesired = -8
+            yawDesired = -1
 
         key = keyboard.getKey()
 
@@ -178,22 +177,29 @@ while robot.step(timestep) != -1:
     # range_front_value = range_front.getValue();
     # cameraData = camera.getImage()
 
+    
+
     ## Fill in Setpoints
-    setpoint = cffirmware.setpoint_t()
-    setpoint.mode.z = cffirmware.modeAbs
+    setpoint = cf.setpoint_t()
+    setpoint.mode.z = cf.modeAbs
     setpoint.position.z = 1.0
-    setpoint.mode.yaw = cffirmware.modeVelocity
-    setpoint.attitudeRate.yaw = degrees(yawDesired)
-    setpoint.mode.x = cffirmware.modeVelocity
-    setpoint.mode.y = cffirmware.modeVelocity
-    setpoint.velocity.x = forwardDesired
-    setpoint.velocity.y = sidewaysDesired
+    setpoint.mode.yaw = cf.modeVelocity
+    setpoint.attitudeRate.yaw = yawDesired
+    setpoint.mode.x = cf.modeAbs
+    setpoint.mode.y = cf.modeAbs
+
+    # setpoint.position.x = xGlobal + forwardDesired * dt
+    # print(forwardDesired * dt)
+    # setpoint.position.y = yGlobal + sidewaysDesired * dt
+    if robot.getTime() > 10:
+        setpoint.position.x = 1.0
+        print(setpoint.position.x- xGlobal)
     setpoint.velocity_body = True
 
     ## Firmware PID bindings
-    control = cffirmware.control_t()
+    control = cf.control_t()
     tick = 100 #this value makes sure that the position controller and attitude controller are always always initiated
-    cffirmware.controllerMellinger(mellinger_ctrl, control, setpoint,sensors,state,tick)
+    cf.controllerMellinger(mellinger_ctrl, control, setpoint,sensors,state,tick)
 
     ##
     cmd_roll = radians(control.roll)
@@ -201,11 +207,14 @@ while robot.step(timestep) != -1:
     cmd_yaw = -radians(control.yaw)
     cmd_thrust = control.thrust
 
+    # if robot.getTime() > 20:
+    #     cmd_yaw = 1000*(1-yaw_rate)
+
     ## Motor mixing
-    motorPower_m1 =  cmd_thrust - cmd_roll + cmd_pitch + cmd_yaw
-    motorPower_m2 =  cmd_thrust - cmd_roll - cmd_pitch - cmd_yaw
-    motorPower_m3 =  cmd_thrust + cmd_roll - cmd_pitch + cmd_yaw
-    motorPower_m4 =  cmd_thrust + cmd_roll + cmd_pitch - cmd_yaw
+    motorPower_m1 =  cmd_thrust - cmd_roll/2 + cmd_pitch/2 + cmd_yaw
+    motorPower_m2 =  cmd_thrust - cmd_roll/2 - cmd_pitch/2 - cmd_yaw
+    motorPower_m3 =  cmd_thrust + cmd_roll/2 - cmd_pitch/2 + cmd_yaw
+    motorPower_m4 =  cmd_thrust + cmd_roll/2 + cmd_pitch/2 - cmd_yaw
 
     scaling = 1000 ##Todo, remove necessity of this scaling (SI units in firmware)
     m1_motor.setVelocity(-motorPower_m1/scaling)

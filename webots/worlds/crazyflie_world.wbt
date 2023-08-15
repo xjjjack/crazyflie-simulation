@@ -19,5 +19,5 @@ TexturedBackgroundLight {
 Floor {
 }
 Crazyflie {
-  controller "crazyflie_controller_py_firmware_mellinger"
+  controller "crazyflie_controller_py"
 }

@@ -23,11 +23,13 @@ from controller import Keyboard
 from controller import Camera
 from controller import DistanceSensor
 
-from math import cos, sin
+from math import cos, sin, degrees, radians
 
 import sys
 sys.path.append('../../../controllers/python_based')
 from pid_controller import pid_velocity_fixed_height_controller
+from trajectory import trajectory
+trajectory = trajectory('/home/jack/crazyflie-simulation/traj2.csv')
 
 FLYING_ATTITUDE = 1
 
@@ -146,8 +148,14 @@ if __name__ == '__main__':
 
             key = keyboard.getKey()
 
+        # if robot.getTime() > 10:
+        #     waypoint = trajectory.get_waypoint(robot.getTime()-10)
+        #     forward_desired = waypoint[2]
+        #     sideways_desired = waypoint[10]
+        #     height_desired = waypoint[17]
+        print(v_x, v_y)
 
-        height_desired += height_diff_desired * dt
+        # height_desired += height_diff_desired * dt
 
         ## Example how to get sensor data
         ## range_front_value = range_front.getValue();

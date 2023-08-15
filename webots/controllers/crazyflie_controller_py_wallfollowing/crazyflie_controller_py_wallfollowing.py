@@ -29,7 +29,7 @@ import sys
 sys.path.append('../../../controllers/python_based')
 from pid_controller import pid_velocity_fixed_height_controller
 
-sys.path.append('../../../../../python/crazyflie-lib-python/examples/multiranger/wall_following')
+sys.path.append('/home/jack/crazyflie-lib-python/examples/multiranger/wall_following')
 from wall_following import WallFollowing
 
 FLYING_ATTITUDE = 1
@@ -111,6 +111,9 @@ if __name__ == '__main__':
 
         dt = robot.getTime() - past_time
         actual_state = {}
+        if not autonomous_mode and robot.getTime() > 20:
+            autonomous_mode = True
+            print("Autonomous mode: ON")
 
         if first_time:
             past_x_global = gps.getValues()[0]
