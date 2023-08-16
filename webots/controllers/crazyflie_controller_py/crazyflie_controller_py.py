@@ -28,8 +28,9 @@ from math import cos, sin, degrees, radians
 import sys
 sys.path.append('../../../controllers/python_based')
 from pid_controller import pid_velocity_fixed_height_controller
-from trajectory import trajectory
-trajectory = trajectory('/home/jack/crazyflie-simulation/traj2.csv')
+from uav_trajectory import Trajectory
+trajectory = Trajectory()
+trajectory.loadcsv('/home/jack/crazyflie-simulation/traj2.csv')
 
 FLYING_ATTITUDE = 1
 
@@ -148,12 +149,14 @@ if __name__ == '__main__':
 
             key = keyboard.getKey()
 
-        # if robot.getTime() > 10:
-        #     waypoint = trajectory.get_waypoint(robot.getTime()-10)
-        #     forward_desired = waypoint[2]
-        #     sideways_desired = waypoint[10]
-        #     height_desired = waypoint[17]
-        print(v_x, v_y)
+        if robot.getTime() > 10:
+            try:
+                e = trajectory.eval(robot.getTime()-10)
+                forward_desired = e.vel[0]
+                sideways_desired = e.vel[1]
+            except AssertionError:
+                pass
+
 
         # height_desired += height_diff_desired * dt
 
